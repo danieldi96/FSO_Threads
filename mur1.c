@@ -305,9 +305,15 @@ void comprovar_bloc(int f, int c)
 		}
 		/* TODO: generar nova pilota */
 		if (quin == BLKCHAR){
+			parametres[actballs].vel_f = parametres[actballs-1].vel_f;
+			parametres[actballs].vel_c = parametres[actballs-1].vel_c;
+			parametres[actballs].f_pil = f;
+			parametres[actballs].c_pil = c;
+			parametres[actballs].pos_f = (float) f;
+			parametres[actballs].pos_c = (float) c;
+			printf("\nActBalls %d %d", actballs, list_threads[actballs].id);
+			pthread_create(&list_threads[actballs].thread, NULL, &mou_pilota, (void*) (intptr_t) list_threads[actballs].id);
 			actballs++;
-			printf("\nNueva pelota %d", actballs);
-			pthread_create(&list_threads[actballs].thread, NULL, &mou_pilota, &list_threads[actballs].id-1);
 		}
 		nblocs--;
 	}
@@ -320,7 +326,7 @@ void control_impacte(void * ind) {
 	int index = (intptr_t) ind;
 	if (dirPaleta == TEC_DRETA) {
 		if (parametres[index].vel_c <= 0.0)	/* pilota cap a l'esquerra */
-			parametres[index].vel_c = -parametres[index].vel_c - 0.2;	/* xoc: canvi de sentit i reduir velocitat */
+			parametres[index].vel_c = -(parametres[index].vel_c) - 0.2;	/* xoc: canvi de sentit i reduir velocitat */
 		else {	/* a favor: incrementar velocitat */
 			if (parametres[index].vel_c <= 0.8)
 				parametres[index].vel_c += 0.2;
@@ -328,7 +334,7 @@ void control_impacte(void * ind) {
 	} else {
 		if (dirPaleta == TEC_ESQUER) {
 			if (parametres[index].vel_c >= 0.0)	/* pilota cap a la dreta */
-				parametres[index].vel_c = -parametres[index].vel_c + 0.2;	/* xoc: canvi de sentit i reduir la velocitat */
+				parametres[index].vel_c = -(parametres[index].vel_c) + 0.2;	/* xoc: canvi de sentit i reduir la velocitat */
 			else {	/* a favor: incrementar velocitat */
 				if (parametres[index].vel_c >= -0.8)
 					parametres[index].vel_c -= 0.2;
@@ -368,8 +374,8 @@ void * mou_pilota(void * ind)
 {
 	int f_h, c_h;
 	char rh, rv, rd;
-	int fora = 0;
 	int index = (intptr_t) ind;
+	printf("\nIndex %d", index);
 	do{
 		f_h = parametres[index].pos_f + parametres[index].vel_f;	/* posicio hipotetica de la pilota (entera) */
 		c_h = parametres[index].pos_c + parametres[index].vel_c;
@@ -402,8 +408,8 @@ void * mou_pilota(void * ind)
 				if (rd != ' ') {	/* si hi ha obstacle */
 					comprovar_bloc(f_h, c_h);
 					/* TODO?: tractar la col.lisio amb la paleta */
-					parametres[index].vel_f = -parametres[index].vel_f;
-					parametres[index].vel_c = -parametres[index].vel_c;	/* canvia sentit velocitats */
+					parametres[index].vel_f = -(parametres[index].vel_f);
+					parametres[index].vel_c = -(parametres[index].vel_c);	/* canvia sentit velocitats */
 					f_h = parametres[index].pos_f + parametres[index].vel_f;
 					c_h = parametres[index].pos_c + parametres[index].vel_c;	/* actualitza posicio entera */
 				}
@@ -418,13 +424,13 @@ void * mou_pilota(void * ind)
 				if (parametres[index].f_pil != n_fil - 1)	/* si no surt del taulell, */
 					win_escricar(parametres[index].f_pil, parametres[index].c_pil, '1', INVERS);	/* imprimeix pilota */
 				else
-					fora = 1;
+					fi2 = true;
 			}
 		} else {	/* posicio hipotetica = a la real: moure */
 			parametres[index].pos_f += parametres[index].vel_f;
 			parametres[index].pos_c += parametres[index].vel_c;
 		}
-		if (nblocs==0 || fora){
+		if (nblocs==0){
 			fi2 = true;
 		}
 		win_retard(retard);
@@ -505,10 +511,8 @@ int main(int n_args, char *ll_args[])
 		list_threads[i].id = i;
 	}
 
-	pthread_create(&list_threads[0].thread, NULL, &mou_paleta, (void*) (intptr_t) list_threads[0].id);
-	for (int i=1; i<(actballs+1); i++){
-		pthread_create(&list_threads[i].thread, NULL, &mou_pilota, (void*) (intptr_t) list_threads[i].id-1);
-	}
+	pthread_create(&list_threads[0].thread, NULL, &mou_pilota, (void*) (intptr_t) list_threads[0].id);
+	pthread_create(&list_threads[MAXBALLS].thread, NULL, &mou_paleta, (void*) (intptr_t) list_threads[MAXBALLS].id);
 
 	char temps[10];
 	int tem=0;
@@ -530,18 +534,17 @@ int main(int n_args, char *ll_args[])
 		}
 	} while (!fi1 && !fi2);
 
+	sprintf(temps, "\tTemps total %d : %d", min, sec);
+	win_escristr(temps);
+	for (int i=0; i<MAX_THREADS;i++){
+		pthread_join(list_threads[i].thread, NULL);
+	}
+
 	if (nblocs == 0)
 		mostra_final("YOU WIN !");
 	else
 		mostra_final("GAME OVER");
 
 	win_fi();		/* tanca les curses */
-
-	sprintf(temps, "Temps total %d : %d", min, sec);
-	win_escristr(temps);
-	for (int i=0; i<(actballs+1);i++){
-		pthread_join(list_threads[i].thread, NULL);
-	}
-
 	return (0);		/* retorna sense errors d'execucio */
 }
