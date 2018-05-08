@@ -410,18 +410,18 @@ int mou_paleta(void)
 	result = 0;
 	tecla = win_gettec();
 	if (tecla != 0) {
-		if ((tecla == KEY_RIGHT)
+		if ((tecla == TEC_DRETA)
 			&& ((c_pal + MIDA_PALETA) < n_col - 1)) {
 				win_escricar(f_pal, c_pal, ' ', NO_INV);	/* esborra primer bloc */
 				c_pal++;	/* actualitza posicio */
 				win_escricar(f_pal, c_pal + MIDA_PALETA - 1, '0', INVERS);	/*esc. ultim bloc */
 		}
-		if ((tecla == KEY_LEFT) && (c_pal > 1)) {
+		if ((tecla == TEC_ESQUER) && (c_pal > 1)) {
 				win_escricar(f_pal, c_pal + MIDA_PALETA - 1, ' ', NO_INV);	/*esborra ultim bloc */
 				c_pal--;	/* actualitza posicio */
 				win_escricar(f_pal, c_pal, '0', INVERS);	/* escriure primer bloc */
 		}
-		if (tecla == KEY_ENTER)
+		if (tecla == TEC_RETURN)
 			result = 1;	/* final per pulsacio RETURN */
 		dirPaleta = tecla;	/* per a afectar al moviment de les pilotes */
 	}
