@@ -306,7 +306,8 @@ void comprovar_bloc(int f, int c)
 		/* TODO: generar nova pilota */
 		if (quin == BLKCHAR){
 			actballs++;
-			pthread_create(&list_threads[actballs].thread, NULL, &mou_pilota, &list_threads[actballs].id);
+			printf("\nNueva pelota %d", actballs);
+			pthread_create(&list_threads[actballs].thread, NULL, &mou_pilota, &list_threads[actballs].id-1);
 		}
 		nblocs--;
 	}
@@ -369,7 +370,6 @@ void * mou_pilota(void * ind)
 	char rh, rv, rd;
 	int fora = 0;
 	int index = (intptr_t) ind;
-	printf("\n\tSe crea un thread nuevo");
 	do{
 		f_h = parametres[index].pos_f + parametres[index].vel_f;	/* posicio hipotetica de la pilota (entera) */
 		c_h = parametres[index].pos_c + parametres[index].vel_c;
