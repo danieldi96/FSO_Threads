@@ -6,6 +6,8 @@ mur0 : mur0.c winsuport.o winsuport.h
 mur1 : mur1.c winsuport.o winsuport.h
 	gcc -Wall -g mur1.c winsuport.o -o mur1 -lcurses -lpthread
 
+mur2 : mur2.c winsuport.o winsuport.h
+	gcc -Wall mur2.c winsuport.o -o mur2 -lcurses -lpthread
 
 
 # auxiliars per a les curses

@@ -1,6 +1,6 @@
 /*****************************************************************************/
 /*                                                                           */
-/*                           mur0.c                                          */
+/*                           mur1.c                                          */
 /*                                                                           */
 /*  Programa inicial d'exemple per a les practiques 2 i 3 d'ISO.             */
 /*                                                                           */
@@ -12,7 +12,7 @@
 /*     compilat amb la llibreria 'curses':                                   */
 /*                                                                           */
 /*       $ gcc -c winsuport.c -o winsuport.o                                 */
-/*       $ gcc mur0.c winsuport.o -o mur0 -lcurses                           */
+/*       $ gcc mur1.c winsuport.o -o mur0 -lcurses                           */
 /*                                                                           */
 /*  Al tenir una orientació vertical cal tenir un terminal amb prou files.   */
 /*  Per exemple:                                                             */
@@ -312,7 +312,7 @@ void comprovar_bloc(int f, int c)
 			parametres[actballs].pos_f = (float) f;
 			parametres[actballs].pos_c = (float) c;
 			printf("\nActBalls %d %d", actballs, list_threads[actballs].id);
-			pthread_create(&list_threads[actballs].thread, NULL, &mou_pilota, (void*) (intptr_t) list_threads[actballs].id);
+			pthread_create(&list_threads[actballs].thread, NULL, mou_pilota, (void*) (intptr_t) list_threads[actballs].id);
 			actballs++;
 		}
 		nblocs--;
@@ -511,8 +511,8 @@ int main(int n_args, char *ll_args[])
 		list_threads[i].id = i;
 	}
 
-	pthread_create(&list_threads[0].thread, NULL, &mou_pilota, (void*) (intptr_t) list_threads[0].id);
-	pthread_create(&list_threads[MAXBALLS].thread, NULL, &mou_paleta, (void*) (intptr_t) list_threads[MAXBALLS].id);
+	pthread_create(&list_threads[0].thread, NULL, mou_pilota, (void*) (intptr_t) list_threads[0].id);
+	pthread_create(&list_threads[MAXBALLS].thread, NULL, mou_paleta, (void*) (intptr_t) list_threads[MAXBALLS].id);
 
 	char temps[10];
 	int tem=0;
