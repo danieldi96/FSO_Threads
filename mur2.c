@@ -119,7 +119,7 @@ int retard;			/* valor del retard de moviment, en mil.lisegons */
 int fi1 = false, fi2 = false;
 int sec=0;
 int min=0;
-int actballs = 0;
+int num_pil = 0;
 int num_pil_fora = 0;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 struct create_thread list_threads[MAX_THREADS];
@@ -236,7 +236,6 @@ int inicialitza_joc(void)
 	parametres[0].f_pil = parametres[0].pos_f;
 	parametres[0].c_pil = parametres[0].pos_c;		/* dibuixar la pilota inicialment */
 	win_escricar(parametres[0].f_pil, parametres[0].c_pil, '1', INVERS);
-	actballs++;
 
 	/* generar els blocs */
 	nb = 0;
@@ -277,7 +276,6 @@ void mostra_final(char *miss)
 	char marge[LONGMISS];
 	char new_message[LONGMISS];
 	sprintf(new_message, "%s Temps-> %d : %d", miss, min, sec);
-
 	/* centrar el misssatge */
 	lmarge=(n_col+strlen(new_message))/2;
 	sprintf(marge,"%%%ds",lmarge);
@@ -313,15 +311,15 @@ void comprovar_bloc(int f, int c)
 		pthread_mutex_unlock(&mutex);
 		/* TODO: generar nova pilota */
 		if (quin == BLKCHAR){
-			parametres[actballs].vel_f = parametres[actballs-1].vel_f;
-			parametres[actballs].vel_c = parametres[actballs-1].vel_c;
-			parametres[actballs].f_pil = f;
-			parametres[actballs].c_pil = c;
-			parametres[actballs].pos_f = (float) f;
-			parametres[actballs].pos_c = (float) c;
-			pthread_create(&list_threads[actballs].thread, NULL, mou_pilota, (void*) (intptr_t) list_threads[actballs].id);
+			parametres[num_pil].vel_f = parametres[num_pil-1].vel_f;
+			parametres[num_pil].vel_c = parametres[num_pil-1].vel_c;
+			parametres[num_pil].f_pil = f;
+			parametres[num_pil].c_pil = c;
+			parametres[num_pil].pos_f = (float) f;
+			parametres[num_pil].pos_c = (float) c;
+			pthread_create(&list_threads[num_pil].thread, NULL, mou_pilota, (void*) (intptr_t) list_threads[num_pil].id);
 			pthread_mutex_lock(&mutex);
-			actballs++;
+			num_pil++;
 			pthread_mutex_unlock(&mutex);
 		}
 		pthread_mutex_lock(&mutex);
@@ -360,7 +358,9 @@ void control_impacte(void * ind) {
 			}
 		}
 	}
+	pthread_mutex_lock(&mutex);
 	dirPaleta=0;	/* reset perque ja hem aplicat l'efecte */
+	pthread_mutex_unlock(&mutex);
 }
 
 float control_impacte2(int c_pil, float velc0) {
@@ -432,17 +432,20 @@ void * mou_pilota(void * ind)
 			}
 			/* mostrar la pilota a la nova posició */
 			pthread_mutex_lock(&mutex);
-			if (win_quincar(f_h, c_h) == ' ') {	/* verificar posicio definitiva *//* si no hi ha obstacle */
+			if (win_quincar(f_h, c_h) == ' '){	/* verificar posicio definitiva *//* si no hi ha obstacle */
 				win_escricar(parametres[index].f_pil, parametres[index].c_pil, ' ', NO_INV);	/* esborra pilota */
+				pthread_mutex_unlock(&mutex);
 				parametres[index].pos_f += parametres[index].vel_f;
 				parametres[index].pos_c += parametres[index].vel_c;
 				parametres[index].f_pil = f_h;
 				parametres[index].c_pil = c_h;	/* actualitza posicio actual */
+				pthread_mutex_lock(&mutex);
 				if (parametres[index].f_pil != n_fil - 1){	/* si no surt del taulell, */
 					win_escricar(parametres[index].f_pil, parametres[index].c_pil, '1', INVERS);	/* imprimeix pilota */
-				} else{
-						num_pil_fora++;
-						if (actballs == num_pil_fora)
+				}else{
+						if (num_pil != num_pil_fora){
+							num_pil_fora++;
+						} else
 							fi2 = true;
 				}
 			}
@@ -548,7 +551,7 @@ int main(int n_args, char *ll_args[])
 	for (int i=0; i<MAX_THREADS; i++){
 		list_threads[i].id = i;
 	}
-
+	num_pil++;
 	pthread_create(&list_threads[0].thread, NULL, mou_pilota, (void*) (intptr_t) list_threads[0].id);
 	pthread_mutex_init(&mutex, NULL);
 	pthread_create(&list_threads[MAXBALLS].thread, NULL, mou_paleta, (void*) (intptr_t) list_threads[MAXBALLS].id);
@@ -565,8 +568,10 @@ int main(int n_args, char *ll_args[])
 				min++;
 				sec=0;
 			}
+			pthread_mutex_lock(&mutex);
 			sprintf(temps,"Temps %d : %d", min, sec);
 			win_escristr(temps);
+			pthread_mutex_unlock(&mutex);
 			tem=0;
 		}
 	} while (!fi1 && !fi2);
