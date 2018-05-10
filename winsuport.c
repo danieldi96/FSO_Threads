@@ -145,7 +145,7 @@ void win_escristr(char *str)
 int win_gettec(void)
 {
   int result = 0;
-  
+
   if (hi_ha_win)
   { result = wgetch(win);
     if (result == ERR) result = 0;
@@ -153,13 +153,11 @@ int win_gettec(void)
   return(result);
 }
 
-
 int win_retard(int ms)
 {
   napms(ms);
   return(0);
 }
-
 
 int win_carregatauler(char *nom_fitxer, int n_f, int n_c, char creq)
 {
@@ -204,5 +202,3 @@ int win_carregatauler(char *nom_fitxer, int n_f, int n_c, char creq)
   else error = -5;              /* error finestra no oberta */
   return(error);                /* retorna 0 si no hi ha error */
 }
-
-
