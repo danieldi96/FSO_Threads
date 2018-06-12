@@ -1,5 +1,15 @@
+#include <stdint.h>		/* intptr_t for 64bits machines */
+#include <stdio.h>		/* incloure definicions de funcions estandard */
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "winsuport2.h"		/* incloure definicions de funcions propies */
 #include "memoria.h"
+
 #define BLKCHAR 'B'
 #define FRNTCHAR 'A'
 #define ARG 12
@@ -7,13 +17,18 @@
 pid_t pid_fill;
 int id_ipc, id_ipc_com;
 int n_fil, n_col, retard;
+int f_pil, c_pil;
+float vel_c, vel_f;
+float pos_c, pos_f;
+
+// Variables per a transformar en String
+char str_retard[20];
+char str_n_fil[20], str_n_col[20];
+char str_id_ipc[20], str_id_ipc_com[20];
 char str_f_pil[20], str_c_pil[20];
 char str_vel_c[20], str_vel_f[20];
 char str_pos_c[20], str_pos_f[20];
 
-int f_pil, c_pil;
-float vel_c, vel_f;
-float pos_c, pos_f;
 int* num_pil;
 int* num_pil_fora;
 int* dirPaleta;
@@ -40,7 +55,24 @@ void comprovar_bloc(int f, int c)
 
 		/* TODO: generar nova pilota */
 		if (quin == BLKCHAR){
-			//Generar nueva pelota FASE 3
+			//Generar nova pilota FASE 3
+			sprintf(str_retard, "%d", retard);
+			sprintf(str_n_fil, "%d", n_fil);
+			sprintf(str_n_col, "%d", n_col);
+			sprintf(str_id_ipc, "%d", id_ipc);
+			sprintf(str_id_ipc_com, "%d", id_ipc_com);
+			sprintf(str_f_pil, "%d", f_pil);
+			sprintf(str_c_pil, "%d", c_pil);
+			sprintf(str_vel_f, "%f", vel_f);
+			sprintf(str_vel_c, "%f", vel_c);
+			sprintf(str_pos_f, "%f", pos_f);
+			sprintf(str_pos_c, "%f", pos_c);
+
+			pid_fill = fork();
+			if (pid_fill == (pid_t) 0){			//Proces fill
+				execlp("./pilota3", "pilota3", str_id_ipc, str_id_ipc_com, str_f_pil, str_c_pil, str_vel_f,
+				str_vel_c, str_pos_f, str_pos_c, str_n_fil, str_n_col, str_retard, (char *) 0);
+			} else 	(*num_pil)++;						//Proces pare
 		}
 		*nblocs -= 1;
 	}
@@ -51,7 +83,6 @@ void comprovar_bloc(int f, int c)
 /* no te en compta si el moviment de la paleta no és recent */
 /* cal tenir en compta que després es calcula el rebot */
 void control_impacte(void * ind) {
-	int index = (intptr_t) ind;
 	if (*dirPaleta == TEC_DRETA) {
 		if (vel_c <= 0.0)	/* pilota cap a l'esquerra */
 			vel_c = -(vel_c) - 0.2;	/* xoc: canvi de sentit i reduir velocitat */
@@ -88,7 +119,6 @@ void * mou_pilota(void * ind)
 {
 	int f_h, c_h;
 	char rh, rv, rd;
-	int index = (intptr_t) ind;
 	do{
 		f_h = pos_f + vel_f;	/* posicio hipotetica de la pilota (entera) */
 		c_h = pos_c + vel_c;
@@ -156,7 +186,7 @@ void * mou_pilota(void * ind)
 	exit(0);
 }
 
-void arguments(){
+void arguments(ll_args[]){
 	id_ipc = atoi(ll_args[1]);
 	id_ipc_com = atoi(ll_args[2]);
 	f_pil = atoi(ll_args[3]);
@@ -169,13 +199,14 @@ void arguments(){
 	n_col = atoi(ll_args[10]);
 	retard = atoi(ll_args[11]);
 }
-void main(int n_args, char *ll_args[]){
+
+int main(int n_args, char *ll_args[]){
 	if (n_args != ARG){
 		fprintf(stderr, "Arguments erronis proces fill.\nArguments necessaris %d. Arguments donats: %d", ARG, n_args);
 		exit(1);
 	}
 
-	arguments();
+	arguments(ll_args);
 	void* pun_mem_compartida;
 
 	pun_mem_compartida = map_mem(id_ipc_com);
