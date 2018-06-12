@@ -82,7 +82,7 @@ void comprovar_bloc(int f, int c)
 /* funcio per a calcular rudimentariament els efectes amb la pala */
 /* no te en compta si el moviment de la paleta no és recent */
 /* cal tenir en compta que després es calcula el rebot */
-void control_impacte(void * ind) {
+void control_impacte(int ind) {
 	if (*dirPaleta == TEC_DRETA) {
 		if (vel_c <= 0.0)	/* pilota cap a l'esquerra */
 			vel_c = -(vel_c) - 0.2;	/* xoc: canvi de sentit i reduir velocitat */
@@ -115,7 +115,7 @@ void control_impacte(void * ind) {
 
 /* funcio per moure la pilota: retorna un 1 si la pilota surt per la porteria,*/
 /* altrament retorna un 0 */
-void * mou_pilota(void * ind)
+void* mou_pilota(int ind)
 {
 	int f_h, c_h;
 	char rh, rv, rd;
@@ -178,7 +178,7 @@ void * mou_pilota(void * ind)
 			pos_f += vel_f;
 			pos_c += vel_c;
 		}
-		if (nblocs==0){
+		if (*nblocs==0){
 			*fi2 = true;
 		}
 		win_retard(retard);
@@ -186,7 +186,7 @@ void * mou_pilota(void * ind)
 	exit(0);
 }
 
-void arguments(ll_args[]){
+void arguments(char *ll_args[]){
 	id_ipc = atoi(ll_args[1]);
 	id_ipc_com = atoi(ll_args[2]);
 	f_pil = atoi(ll_args[3]);
