@@ -208,8 +208,13 @@ int main(int n_args, char *ll_args[]){
 
 	arguments(ll_args);
 	void* pun_mem_compartida;
+	void* pun_mem_pantalla;
 
+	pun_mem_pantalla = map_mem(id_ipc);
 	pun_mem_compartida = map_mem(id_ipc_com);
+
+	win_set(pun_mem_pantalla, n_fil, n_col);
+
 	num_pil = pun_mem_compartida;
 	num_pil_fora = pun_mem_compartida + 4;
 	dirPaleta = pun_mem_compartida + 8;
