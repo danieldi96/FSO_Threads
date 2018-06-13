@@ -13,6 +13,7 @@
 
 #define BLKCHAR 'B'
 #define FRNTCHAR 'A'
+#define TOPCHAR 'T'
 #define ARG 12
 
 pid_t pid_fill;
@@ -45,7 +46,7 @@ void comprovar_bloc(int f, int c)
 {
 	int col;
 	char quin = win_quincar(f, c);
-	if (quin == BLKCHAR || quin == FRNTCHAR) {
+	if (quin == BLKCHAR || quin == FRNTCHAR || quin == TOPCHAR) {
 		col = c;
 		while (win_quincar(f, col) != ' ') {
 			win_escricar(f, col, ' ', NO_INV);
@@ -55,6 +56,9 @@ void comprovar_bloc(int f, int c)
 		while (win_quincar(f, col) != ' ') {
 			win_escricar(f, col, ' ', NO_INV);
 			col--;
+		}
+		if (quin == TOPCHAR){
+			start_t = clock();
 		}
 		/* TODO: generar nova pilota */
 		if (quin == BLKCHAR){

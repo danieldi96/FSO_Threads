@@ -53,6 +53,7 @@ struct params{
 #define BLKCHAR 'B'
 #define WLLCHAR '#'
 #define FRNTCHAR 'A'
+#define TOPCHAR 'T'
 #define LONGMISS	65
 			/* variables globals */
 char *descripcio[] = {
@@ -293,7 +294,7 @@ int inicialitza_joc(void)
 	offset = (n_col - (*nblocs) * (BLKSIZE + BLKGAP) + BLKGAP) / 2;					/* offset de columna inicial */
 	for (i = 0; i < (*nblocs); i++) {
 		for (c = 0; c < BLKSIZE; c++) {
-			win_escricar(3, offset + c, FRNTCHAR, INVERS);
+			win_escricar(3, offset + c, TOPCHAR, INVERS);
 			nb++;
 			win_escricar(4, offset + c, BLKCHAR, NO_INV);
 			nb++;
