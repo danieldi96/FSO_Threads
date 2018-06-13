@@ -20,6 +20,8 @@ int n_fil, n_col, retard;
 int f_pil, c_pil;
 float vel_c, vel_f;
 float pos_c, pos_f;
+void* pun_mem_compartida;
+void* pun_mem_pantalla;
 
 // Variables per a transformar en String
 char str_retard[20];
@@ -56,6 +58,7 @@ void comprovar_bloc(int f, int c)
 		/* TODO: generar nova pilota */
 		if (quin == BLKCHAR){
 			//Generar nova pilota FASE 3
+			(*num_pil)++;
 			sprintf(str_retard, "%d", retard);
 			sprintf(str_n_fil, "%d", n_fil);
 			sprintf(str_n_col, "%d", n_col);
@@ -72,7 +75,7 @@ void comprovar_bloc(int f, int c)
 			if (pid_fill == (pid_t) 0){			//Proces fill
 				execlp("./pilota3", "pilota3", str_id_ipc, str_id_ipc_com, str_f_pil, str_c_pil, str_vel_f,
 				str_vel_c, str_pos_f, str_pos_c, str_n_fil, str_n_col, str_retard, (char *) 0);
-			} else 	(*num_pil)++;						//Proces pare
+			}						//Proces pare
 		}
 		*nblocs -= 1;
 	}
@@ -165,7 +168,9 @@ void* mou_pilota(int ind)
 				f_pil = f_h;
 				c_pil = c_h;	/* actualitza posicio actual */
 				if (f_pil != n_fil - 1){	/* si no surt del taulell, */
-					win_escricar(f_pil, c_pil, '1', INVERS);	/* imprimeix pilota */
+					char id[4];
+					sprintf(id, "%d", ind);
+					win_escricar(f_pil, c_pil, *id, INVERS);	/* imprimeix pilota */
 				}else{
 						if (*num_pil != *num_pil_fora){
 							*num_pil_fora += 1;
@@ -207,8 +212,6 @@ int main(int n_args, char *ll_args[]){
 	}
 
 	arguments(ll_args);
-	void* pun_mem_compartida;
-	void* pun_mem_pantalla;
 
 	pun_mem_pantalla = map_mem(id_ipc);
 	pun_mem_compartida = map_mem(id_ipc_com);
@@ -216,11 +219,11 @@ int main(int n_args, char *ll_args[]){
 	win_set(pun_mem_pantalla, n_fil, n_col);
 
 	num_pil = pun_mem_compartida;
-	num_pil_fora = pun_mem_compartida + 4;
-	dirPaleta = pun_mem_compartida + 8;
-	nblocs = pun_mem_compartida + 12;
-	fi1 = pun_mem_compartida + 16;
-	fi2 = pun_mem_compartida + 20;
+	num_pil_fora = pun_mem_compartida + sizeof(int)*1;
+	dirPaleta = pun_mem_compartida + sizeof(int)*2;
+	nblocs = pun_mem_compartida + sizeof(int)*3;
+	fi1 = pun_mem_compartida + sizeof(int)*4;
+	fi2 = pun_mem_compartida + sizeof(int)*5;
 
 	mou_pilota(*num_pil);
 

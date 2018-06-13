@@ -169,11 +169,11 @@ void inicialitzar_variables(){
 	pun_mem_compartida = map_mem(id_ipc_com);
 
 	num_pil = pun_mem_compartida;
-	num_pil_fora = pun_mem_compartida + 4;
-	dirPaleta = pun_mem_compartida + 8;
-	nblocs = pun_mem_compartida + 12;
-	fi1 = pun_mem_compartida + 16;
-	fi2 = pun_mem_compartida + 20;
+	num_pil_fora = pun_mem_compartida + sizeof(int)*1;
+	dirPaleta = pun_mem_compartida + sizeof(int)*2;
+	nblocs = pun_mem_compartida + sizeof(int)*3;
+	fi1 = pun_mem_compartida + sizeof(int)*4;
+	fi2 = pun_mem_compartida + sizeof(int)*5;
 }
 
 /* funcio per carregar i interpretar el fitxer de configuracio de la partida */
