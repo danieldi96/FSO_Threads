@@ -334,6 +334,7 @@ void mostra_final(char *miss)
 	sprintf(strin, marge,new_message);
 	win_escristr(strin);
 
+	win_update();
 	/* espera tecla per a que es pugui veure el missatge */
 	getchar();
 }
@@ -404,16 +405,16 @@ int main(int n_args, char *ll_args[])
 
 	printf("Joc del Mur: prem RETURN per continuar:\n");
 	getchar();
-
+	inicialitzar_variables();
 	//Inicialitzzem el joc i aconseguim la mida del taulell
 	if (inicialitza_joc() != 0)																		/* intenta crear el taulell de joc */
 		exit(4);																										/* aborta si hi ha algun problema amb taulell */
-
+	win_update();
 	//Creem el thread de la paleta
 	pthread_create(&th_paleta, NULL, mou_paleta, (void *) NULL);
 
 	//Inicialitzem els recursos necessaris
-	inicialitzar_variables();
+
 	toString(*num_pil);
 	list_procs[*num_pil] = fork();
 	if (list_procs[0] == (pid_t) 0){			//Proces fill
@@ -451,8 +452,9 @@ int main(int n_args, char *ll_args[])
 	else
 		mostra_final("GAME OVER");
 
+	win_fi();		/* tanca les curses */
 	elim_mem(id_ipc);
 	elim_mem(id_ipc_com);
-	win_fi();		/* tanca les curses */
+
 	return (0);		/* retorna sense errors d'execucio */
 }

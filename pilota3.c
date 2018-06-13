@@ -191,10 +191,10 @@ void arguments(char *ll_args[]){
 	id_ipc_com = atoi(ll_args[2]);
 	f_pil = atoi(ll_args[3]);
 	c_pil = atoi(ll_args[4]);
-	vel_f = atoi(ll_args[5]);
-	vel_c = atoi(ll_args[6]);
-	pos_f = atoi(ll_args[7]);
-	pos_c = atoi(ll_args[8]);
+	vel_f = atof(ll_args[5]);
+	vel_c = atof(ll_args[6]);
+	pos_f = atof(ll_args[7]);
+	pos_c = atof(ll_args[8]);
 	n_fil = atoi(ll_args[9]);
 	n_col = atoi(ll_args[10]);
 	retard = atoi(ll_args[11]);
