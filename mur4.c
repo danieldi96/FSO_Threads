@@ -32,6 +32,8 @@
 #include <sys/wait.h>
 #include "winsuport2.h"		/* incloure definicions de funcions propies */
 #include "memoria.h"
+#include "missatge.h"
+#include "semafor.h"
 
 /* Definicio Structs*/
 struct params{
@@ -142,6 +144,8 @@ int* fi1 = false;
 int* fi2 = false;
 int* blocs_t_invers;
 int* max_time;
+int* id_semafor;
+int* id_bustia;
 
 
 /*funcio que s'encarrega de pasar els valors numerics a una cadena de caracters (Strings) */
@@ -163,7 +167,7 @@ void toString(int pilota){
 void inicialitzar_variables(){
 	int tam_mem;
 	//Calculem el tamany de la memoria compartida
-	tam_mem = sizeof(int)*8;
+	tam_mem = sizeof(int)*10;
 
 	//Inicialitzem la memoria compartida i obtenim l'id
 	id_ipc_com = ini_mem(tam_mem);
@@ -179,8 +183,12 @@ void inicialitzar_variables(){
 	fi2 = pun_mem_compartida + sizeof(int)*5;
 	blocs_t_invers = pun_mem_compartida + sizeof(int)*6;
 	max_time = pun_mem_compartida + sizeof(int)*7;
+	id_semafor = pun_mem_compartida + sizeof(int)*8;
+	id_bustia = pun_mem_compartida + sizeof(int)*9;
 
 	*blocs_t_invers = INVERS;
+	*id_semafor = ini_sem(1);
+	*id_bustia = ini_mis();
 }
 
 /* funcio per carregar i interpretar el fitxer de configuracio de la partida */
@@ -441,8 +449,11 @@ int main(int n_args, char *ll_args[])
 				min++;
 				sec=0;
 			}
-			if ((*max_time) != 0) (*max_time)--;
 			sprintf(temps,"Temps %d : %d", min, sec);
+			if ((*max_time) != 0){
+				sprintf(temps,"Temps %d : %d\t Temps bloc T: %d", min, sec, (*max_time));
+				(*max_time)--;
+			}
 			win_escristr(temps);
 			tem=0;
 		}
@@ -462,6 +473,8 @@ int main(int n_args, char *ll_args[])
 	pthread_join(th_paleta, NULL);
 
 	win_fi();		/* tanca les curses */
+	elim_sem(id_semafor);
+	elim_mis(*id_bustia);
 	elim_mem(id_ipc);
 	elim_mem(id_ipc_com);
 

@@ -11,10 +11,13 @@
 #include <sys/wait.h>
 #include "winsuport2.h"		/* incloure definicions de funcions propies */
 #include "memoria.h"
+#include "missatge.h"
+#include "semafor.h"
 
 #define BLKCHAR 'B'
 #define FRNTCHAR 'A'
 #define TOPCHAR 'T'
+#define WLLCHAR '#'
 #define ARG 12
 
 pid_t pid_fill;
@@ -27,8 +30,11 @@ float pos_c, pos_f;
 float time_total, time_start, time_end;
 void* pun_mem_compartida;
 void* pun_mem_pantalla;
+void* missatge_rebut;
 
 // Variables per a transformar en String
+char id_pilota[4];
+char missatge_bustia[20];
 char str_retard[20];
 char str_n_fil[20], str_n_col[20];
 char str_id_ipc[20], str_id_ipc_com[20];
@@ -44,12 +50,17 @@ int* fi1;
 int* fi2;
 int* blocs_t_invers;
 int* max_time;
+int* id_semafor;
+int* id_bustia;
 
 /* Si hi ha una col.lisió pilota-bloci esborra el bloc */
 void comprovar_bloc(int f, int c)
 {
 	int col;
 	char quin = win_quincar(f, c);
+	if (quin == WLLCHAR){
+		if ((*max_time) > 0) win_escricar(f, c, ' ', NO_INV);
+	}
 	if (quin == BLKCHAR || quin == FRNTCHAR || quin == TOPCHAR) {
 		col = c;
 		while (win_quincar(f, col) != ' ') {
@@ -77,6 +88,8 @@ void comprovar_bloc(int f, int c)
 			srand(time(NULL));
 			r_vel_f = ((rand()%100)+1)*0.01;
 			r_vel_c = ((rand()%100)+1)*0.01;
+			if (vel_f < 0.5) r_vel_f = 1.0;
+			else if (vel_f == 1.0) r_vel_f = 0.1;
 
 			sprintf(str_retard, "%d", retard);
 			sprintf(str_n_fil, "%d", n_fil);
@@ -187,15 +200,18 @@ void* mou_pilota(int ind)
 				f_pil = f_h;
 				c_pil = c_h;	/* actualitza posicio actual */
 				if (f_pil != n_fil - 1){	/* si no surt del taulell, */
-					char id[4];
-					sprintf(id, "%d", ind);
-					win_escricar(f_pil, c_pil, *id, *blocs_t_invers);	/* imprimeix pilota */
-				}else{
-						if (*num_pil != *num_pil_fora){
-							*num_pil_fora += 1;
-							win_escricar( f_pil, c_pil, ' ', NO_INV); //esborrem la pilota
-						} else
-							*fi2 = true;
+					sprintf(id_pilota, "%d", ind);
+					win_escricar(f_pil, c_pil, *id_pilota, *blocs_t_invers);	/* imprimeix pilota */
+				}else{				//la pilota surt del taulell
+					if (*num_pil != *num_pil_fora){
+						sprintf(missatge_bustia, "%d:%f", *id_pilota, vel_f);
+						waitS(*id_semafor);
+						sendM(*id_bustia, missatge_bustia, sizeof(missatge_bustia));
+						signalS(*id_semafor);
+						*num_pil_fora += 1;
+						win_escricar( f_pil, c_pil, ' ', NO_INV); //esborrem la pilota
+					} else
+						*fi2 = true;
 				}
 			}
 		} else {	/* posicio hipotetica = a la real: moure */
@@ -205,7 +221,11 @@ void* mou_pilota(int ind)
 		if ((*max_time) == 0){
 			*blocs_t_invers = INVERS;
 		}
-		if (*nblocs==0){
+		if (*num_pil_fora > 0){
+			receiveM(*id_bustia, missatge_rebut);
+			*id_pilota = *((int *) missatge_rebut);
+		}
+		if ((*nblocs)==0){
 			*fi2 = true;
 		}
 		win_retard(retard);
@@ -248,6 +268,8 @@ int main(int n_args, char *ll_args[]){
 	fi2 = pun_mem_compartida + sizeof(int)*5;
 	blocs_t_invers = pun_mem_compartida + sizeof(int)*6;
 	max_time = pun_mem_compartida + sizeof(int)*7;
+	id_semafor = pun_mem_compartida + sizeof(int)*8;
+	id_bustia = pun_mem_compartida + sizeof(int)*9;
 
 	mou_pilota(*num_pil);
 
