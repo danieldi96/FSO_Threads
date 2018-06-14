@@ -1,6 +1,7 @@
 #include <stdint.h>		/* intptr_t for 64bits machines */
 #include <stdio.h>		/* incloure definicions de funcions estandard */
 #include <stdlib.h>
+#include <time.h>
 #include <stdbool.h>
 #include <string.h>
 #include <pthread.h>
@@ -19,6 +20,7 @@ int id_ipc, id_ipc_com;
 int n_fil, n_col, retard;
 int f_pil, c_pil;
 float vel_c, vel_f;
+float r_vel_f, r_vel_c;
 float pos_c, pos_f;
 void* pun_mem_compartida;
 void* pun_mem_pantalla;
@@ -54,11 +56,16 @@ void comprovar_bloc(int f, int c)
 			win_escricar(f, col, ' ', NO_INV);
 			col--;
 		}
-
 		/* TODO: generar nova pilota */
 		if (quin == BLKCHAR){
 			//Generar nova pilota FASE 3
 			(*num_pil)++;
+			srand(time(NULL));
+			r_vel_f = ((rand()%100)+1)*0.01;
+			r_vel_c = ((rand()%100)+1)*0.01;
+			//r_vel_f = 0.35;
+			//r_vel_c = 0.80;
+
 			sprintf(str_retard, "%d", retard);
 			sprintf(str_n_fil, "%d", n_fil);
 			sprintf(str_n_col, "%d", n_col);
@@ -66,8 +73,8 @@ void comprovar_bloc(int f, int c)
 			sprintf(str_id_ipc_com, "%d", id_ipc_com);
 			sprintf(str_f_pil, "%d", f_pil);
 			sprintf(str_c_pil, "%d", c_pil);
-			sprintf(str_vel_f, "%f", vel_f);
-			sprintf(str_vel_c, "%f", vel_c);
+			sprintf(str_vel_f, "%f", r_vel_f);
+			sprintf(str_vel_c, "%f", r_vel_c);
 			sprintf(str_pos_f, "%f", pos_f);
 			sprintf(str_pos_c, "%f", pos_c);
 
@@ -75,7 +82,7 @@ void comprovar_bloc(int f, int c)
 			if (pid_fill == (pid_t) 0){			//Proces fill
 				execlp("./pilota3", "pilota3", str_id_ipc, str_id_ipc_com, str_f_pil, str_c_pil, str_vel_f,
 				str_vel_c, str_pos_f, str_pos_c, str_n_fil, str_n_col, str_retard, (char *) 0);
-			}						//Proces pare
+			}
 		}
 		*nblocs -= 1;
 	}

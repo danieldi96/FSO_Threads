@@ -442,15 +442,16 @@ int main(int n_args, char *ll_args[])
 		win_retard(retard);	/* retard del joc */
 	} while (!(*fi1) && !(*fi2));
 
-	for (int i = 0; i <(*num_pil); i++){
-		waitpid(list_procs[i], NULL, 0);
-	}
-	pthread_join(th_paleta, NULL);
-
 	if (*nblocs == 0)
 		mostra_final("YOU WIN !");
 	else
 		mostra_final("GAME OVER");
+
+	/*for (int i = 0; i <(*num_pil); i++){
+		waitpid(list_procs[i], NULL, 0);
+	}*/
+	waitpid(list_procs[0], NULL, 0);
+	pthread_join(th_paleta, NULL);
 
 	win_fi();		/* tanca les curses */
 	elim_mem(id_ipc);
