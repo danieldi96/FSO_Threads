@@ -16,6 +16,7 @@
 #define TOPCHAR 'T'
 #define ARG 12
 
+clock_t start_t, end_t;
 pid_t pid_fill;
 int id_ipc, id_ipc_com;
 int n_fil, n_col, retard;
@@ -23,6 +24,7 @@ int f_pil, c_pil;
 float vel_c, vel_f;
 float r_vel_f, r_vel_c;
 float pos_c, pos_f;
+float time_restant;
 void* pun_mem_compartida;
 void* pun_mem_pantalla;
 
@@ -40,6 +42,8 @@ int* dirPaleta;
 int* nblocs;
 int* fi1;
 int* fi2;
+int* blocs_t_invers;
+float* max_time;
 
 /* Si hi ha una col.lisió pilota-bloci esborra el bloc */
 void comprovar_bloc(int f, int c)
@@ -58,7 +62,22 @@ void comprovar_bloc(int f, int c)
 			col--;
 		}
 		if (quin == TOPCHAR){
+			/*if (start_t != 0){
+				time_restant = (*max_time - (((float) clock()/CLOCKS_PER_SEC)));
+				*max_time += time_restant;
+			} else{
+				start_t = clock();
+				*max_time += ((float) start_t/CLOCKS_PER_SEC);
+			}*/
 			start_t = clock();
+			time_restant = 0;
+			if (*max_time != 0){
+				time_restant = (*max_time - (((float) start_t/CLOCKS_PER_SEC)));
+			}
+			*max_time = ((float) start_t/CLOCKS_PER_SEC) + time_restant + 5;
+
+			printf("\n\t%f", *max_time);
+			*blocs_t_invers = NO_INV;
 		}
 		/* TODO: generar nova pilota */
 		if (quin == BLKCHAR){
@@ -67,8 +86,6 @@ void comprovar_bloc(int f, int c)
 			srand(time(NULL));
 			r_vel_f = ((rand()%100)+1)*0.01;
 			r_vel_c = ((rand()%100)+1)*0.01;
-			//r_vel_f = 0.35;
-			//r_vel_c = 0.80;
 
 			sprintf(str_retard, "%d", retard);
 			sprintf(str_n_fil, "%d", n_fil);
@@ -84,7 +101,7 @@ void comprovar_bloc(int f, int c)
 
 			pid_fill = fork();
 			if (pid_fill == (pid_t) 0){			//Proces fill
-				execlp("./pilota3", "pilota3", str_id_ipc, str_id_ipc_com, str_f_pil, str_c_pil, str_vel_f,
+				execlp("./pilota4", "pilota4", str_id_ipc, str_id_ipc_com, str_f_pil, str_c_pil, str_vel_f,
 				str_vel_c, str_pos_f, str_pos_c, str_n_fil, str_n_col, str_retard, (char *) 0);
 			}
 		}
@@ -181,7 +198,7 @@ void* mou_pilota(int ind)
 				if (f_pil != n_fil - 1){	/* si no surt del taulell, */
 					char id[4];
 					sprintf(id, "%d", ind);
-					win_escricar(f_pil, c_pil, *id, INVERS);	/* imprimeix pilota */
+					win_escricar(f_pil, c_pil, *id, *blocs_t_invers);	/* imprimeix pilota */
 				}else{
 						if (*num_pil != *num_pil_fora){
 							*num_pil_fora += 1;
@@ -196,6 +213,15 @@ void* mou_pilota(int ind)
 		}
 		if (*nblocs==0){
 			*fi2 = true;
+		}
+		if (!(*blocs_t_invers)){
+			end_t = clock();
+			if (((float) (end_t - start_t) / CLOCKS_PER_SEC) >= (*max_time)){
+				printf("\n\tENTRA");
+				*blocs_t_invers = INVERS;
+				*max_time = 0;
+				start_t = 0;
+			}
 		}
 		win_retard(retard);
 	} while (!(*fi2) && !(*fi1));
@@ -235,7 +261,10 @@ int main(int n_args, char *ll_args[]){
 	nblocs = pun_mem_compartida + sizeof(int)*3;
 	fi1 = pun_mem_compartida + sizeof(int)*4;
 	fi2 = pun_mem_compartida + sizeof(int)*5;
+	blocs_t_invers = pun_mem_compartida + sizeof(int)*6;
+	max_time = pun_mem_compartida + sizeof(int)*7;
 
+	start_t = 0;
 	mou_pilota(*num_pil);
 
 	if (pid_fill != 0) waitpid(pid_fill, NULL, 0);

@@ -140,6 +140,8 @@ int* dirPaleta = 0;
 int* nblocs = 0;
 int* fi1 = false;
 int* fi2 = false;
+int* blocs_t_invers;
+float* max_time;
 
 
 /*funcio que s'encarrega de pasar els valors numerics a una cadena de caracters (Strings) */
@@ -161,7 +163,7 @@ void toString(int pilota){
 void inicialitzar_variables(){
 	int tam_mem;
 	//Calculem el tamany de la memoria compartida
-	tam_mem = sizeof(int)*6;
+	tam_mem = sizeof(int)*8;
 
 	//Inicialitzem la memoria compartida i obtenim l'id
 	id_ipc_com = ini_mem(tam_mem);
@@ -175,6 +177,11 @@ void inicialitzar_variables(){
 	nblocs = pun_mem_compartida + sizeof(int)*3;
 	fi1 = pun_mem_compartida + sizeof(int)*4;
 	fi2 = pun_mem_compartida + sizeof(int)*5;
+	blocs_t_invers = pun_mem_compartida + sizeof(int)*6;
+	max_time = pun_mem_compartida + sizeof(int)*7;
+
+	*blocs_t_invers = INVERS;
+	*max_time = 0;
 }
 
 /* funcio per carregar i interpretar el fitxer de configuracio de la partida */
@@ -419,7 +426,7 @@ int main(int n_args, char *ll_args[])
 	toString(*num_pil);
 	list_procs[*num_pil] = fork();
 	if (list_procs[0] == (pid_t) 0){			//Proces fill
-		execlp("./pilota3", "pilota3", str_id_ipc, str_id_ipc_com, str_f_pil, str_c_pil, str_vel_f,
+		execlp("./pilota4", "pilota4", str_id_ipc, str_id_ipc_com, str_f_pil, str_c_pil, str_vel_f,
 		str_vel_c, str_pos_f, str_pos_c, str_n_fil, str_n_col, str_retard, (char *) 0);
 		exit(0);
 	} else 	(*num_pil)++;										//Proces pare
