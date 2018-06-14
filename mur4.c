@@ -440,9 +440,8 @@ int main(int n_args, char *ll_args[])
 			if (sec>=60){
 				min++;
 				sec=0;
-				if (*max_time > 0) (*max_time)--;
-				printf("\n\t%d", *max_time);
 			}
+			if ((*max_time) != 0) (*max_time)--;
 			sprintf(temps,"Temps %d : %d", min, sec);
 			win_escristr(temps);
 			tem=0;

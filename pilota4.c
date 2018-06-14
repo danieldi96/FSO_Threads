@@ -62,8 +62,15 @@ void comprovar_bloc(int f, int c)
 			col--;
 		}
 		if (quin == TOPCHAR){
-			if (*max_time == 0) *max_time = 5;
-			else *max_time += 5;
+/*
+			if ((*max_time) == 0){
+				(*max_time) = 5;
+			}
+			else{
+				(*max_time) = (*max_time) + 5;
+			}
+*/
+			*max_time = 4;
 			*blocs_t_invers = NO_INV;
 		}
 		/* TODO: generar nova pilota */
