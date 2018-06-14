@@ -23,13 +23,19 @@ winsuport2 : winsuport2.c winsuport2.h
 	gcc -Wall -c winsuport2.c -o winsuport2.o
 
 pilota3 : pilota3.c winsuport2.c winsuport2.h
-	gcc -Wall -g pilota3.c winsuport2.o memoria.o -o pilota3 -lcurses
+	gcc -Wall -g pilota3.c winsuport2.o memoria.o missatge.o semafor.o -o pilota3 -lcurses
 
 pilota4 : pilota4.c winsuport2.c winsuport2.h
-	gcc -Wall -g pilota4.c winsuport2.o memoria.o -o pilota4 -lcurses
+	gcc -Wall -g pilota4.c winsuport2.o memoria.o missatge.o semafor.o -o pilota4 -lcurses
 
 memoria : memoria.c memoria.h
 	gcc -c -Wall memoria.c -o memoria.o
+
+missatge : missatge.c missatge.h
+	gcc -c -Wall missatge.c -o missatge.o
+
+semafor : semafor.c semafor.h
+	gcc -c -Wall semafor.c -o semafor.o
 
 clean:
 	rm -f multifil mf_mutex
