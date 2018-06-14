@@ -473,7 +473,7 @@ int main(int n_args, char *ll_args[])
 	pthread_join(th_paleta, NULL);
 
 	win_fi();		/* tanca les curses */
-	elim_sem(id_semafor);
+	elim_sem(*id_semafor);
 	elim_mis(*id_bustia);
 	elim_mem(id_ipc);
 	elim_mem(id_ipc_com);

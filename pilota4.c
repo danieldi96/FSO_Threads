@@ -14,6 +14,8 @@
 #include "missatge.h"
 #include "semafor.h"
 
+#define MAX_THREADS	10
+#define MAXBALLS	(MAX_THREADS-1)
 #define BLKCHAR 'B'
 #define FRNTCHAR 'A'
 #define TOPCHAR 'T'
@@ -21,6 +23,7 @@
 #define ARG 12
 
 pid_t pid_fill;
+bool llegit = false;
 int id_ipc, id_ipc_com;
 int n_fil, n_col, retard;
 int f_pil, c_pil;
@@ -30,11 +33,12 @@ float pos_c, pos_f;
 float time_total, time_start, time_end;
 void* pun_mem_compartida;
 void* pun_mem_pantalla;
-void* missatge_rebut;
+
 
 // Variables per a transformar en String
-char id_pilota[4];
-char missatge_bustia[20];
+char id_pilota;
+char missatge_bustia[6];
+char missatge_rebut[6];
 char str_retard[20];
 char str_n_fil[20], str_n_col[20];
 char str_id_ipc[20], str_id_ipc_com[20];
@@ -200,16 +204,17 @@ void* mou_pilota(int ind)
 				f_pil = f_h;
 				c_pil = c_h;	/* actualitza posicio actual */
 				if (f_pil != n_fil - 1){	/* si no surt del taulell, */
-					sprintf(id_pilota, "%d", ind);
-					win_escricar(f_pil, c_pil, *id_pilota, *blocs_t_invers);	/* imprimeix pilota */
+					win_escricar(f_pil, c_pil, id_pilota, *blocs_t_invers);	/* imprimeix pilota */
 				}else{				//la pilota surt del taulell
 					if (*num_pil != *num_pil_fora){
-						sprintf(missatge_bustia, "%d:%f", *id_pilota, vel_f);
 						waitS(*id_semafor);
-						sendM(*id_bustia, missatge_bustia, sizeof(missatge_bustia));
-						signalS(*id_semafor);
+						sprintf(missatge_bustia, "%c:%.2f", id_pilota, vel_f);
+						for (int i=0; i < MAXBALLS; i++){
+								sendM(*id_bustia, missatge_bustia, sizeof(missatge_bustia));
+						}
 						*num_pil_fora += 1;
 						win_escricar( f_pil, c_pil, ' ', NO_INV); //esborrem la pilota
+						signalS(*id_semafor);
 					} else
 						*fi2 = true;
 				}
@@ -221,9 +226,10 @@ void* mou_pilota(int ind)
 		if ((*max_time) == 0){
 			*blocs_t_invers = INVERS;
 		}
-		if (*num_pil_fora > 0){
+		if (((*num_pil_fora) > 0) && (!llegit)) {
+			llegit = true;
 			receiveM(*id_bustia, missatge_rebut);
-			*id_pilota = *((int *) missatge_rebut);
+			sprintf(&id_pilota, "%c", missatge_rebut[0]);
 		}
 		if ((*nblocs)==0){
 			*fi2 = true;
@@ -271,6 +277,7 @@ int main(int n_args, char *ll_args[]){
 	id_semafor = pun_mem_compartida + sizeof(int)*8;
 	id_bustia = pun_mem_compartida + sizeof(int)*9;
 
+	sprintf(&id_pilota, "%d", *num_pil);
 	mou_pilota(*num_pil);
 
 	if (pid_fill != 0) waitpid(pid_fill, NULL, 0);
