@@ -2,6 +2,7 @@
 #include <stdio.h>		/* incloure definicions de funcions estandard */
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 #include <stdbool.h>
 #include <string.h>
 #include <pthread.h>
@@ -16,7 +17,6 @@
 #define TOPCHAR 'T'
 #define ARG 12
 
-clock_t start_t, end_t;
 pid_t pid_fill;
 int id_ipc, id_ipc_com;
 int n_fil, n_col, retard;
@@ -24,7 +24,7 @@ int f_pil, c_pil;
 float vel_c, vel_f;
 float r_vel_f, r_vel_c;
 float pos_c, pos_f;
-float time_restant;
+float time_total, time_start, time_end;
 void* pun_mem_compartida;
 void* pun_mem_pantalla;
 
@@ -43,7 +43,7 @@ int* nblocs;
 int* fi1;
 int* fi2;
 int* blocs_t_invers;
-float* max_time;
+int* max_time;
 
 /* Si hi ha una col.lisió pilota-bloci esborra el bloc */
 void comprovar_bloc(int f, int c)
@@ -62,21 +62,8 @@ void comprovar_bloc(int f, int c)
 			col--;
 		}
 		if (quin == TOPCHAR){
-			/*if (start_t != 0){
-				time_restant = (*max_time - (((float) clock()/CLOCKS_PER_SEC)));
-				*max_time += time_restant;
-			} else{
-				start_t = clock();
-				*max_time += ((float) start_t/CLOCKS_PER_SEC);
-			}*/
-			start_t = clock();
-			time_restant = 0;
-			if (*max_time != 0){
-				time_restant = (*max_time - (((float) start_t/CLOCKS_PER_SEC)));
-			}
-			*max_time = ((float) start_t/CLOCKS_PER_SEC) + time_restant + 5;
-
-			printf("\n\t%f", *max_time);
+			if (*max_time == 0) *max_time = 5;
+			else *max_time += 5;
 			*blocs_t_invers = NO_INV;
 		}
 		/* TODO: generar nova pilota */
@@ -211,17 +198,11 @@ void* mou_pilota(int ind)
 			pos_f += vel_f;
 			pos_c += vel_c;
 		}
+		if ((*max_time) == 0){
+			*blocs_t_invers = INVERS;
+		}
 		if (*nblocs==0){
 			*fi2 = true;
-		}
-		if (!(*blocs_t_invers)){
-			end_t = clock();
-			if (((float) (end_t - start_t) / CLOCKS_PER_SEC) >= (*max_time)){
-				printf("\n\tENTRA");
-				*blocs_t_invers = INVERS;
-				*max_time = 0;
-				start_t = 0;
-			}
 		}
 		win_retard(retard);
 	} while (!(*fi2) && !(*fi1));
@@ -264,7 +245,6 @@ int main(int n_args, char *ll_args[]){
 	blocs_t_invers = pun_mem_compartida + sizeof(int)*6;
 	max_time = pun_mem_compartida + sizeof(int)*7;
 
-	start_t = 0;
 	mou_pilota(*num_pil);
 
 	if (pid_fill != 0) waitpid(pid_fill, NULL, 0);

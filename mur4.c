@@ -141,7 +141,7 @@ int* nblocs = 0;
 int* fi1 = false;
 int* fi2 = false;
 int* blocs_t_invers;
-float* max_time;
+int* max_time;
 
 
 /*funcio que s'encarrega de pasar els valors numerics a una cadena de caracters (Strings) */
@@ -181,7 +181,6 @@ void inicialitzar_variables(){
 	max_time = pun_mem_compartida + sizeof(int)*7;
 
 	*blocs_t_invers = INVERS;
-	*max_time = 0;
 }
 
 /* funcio per carregar i interpretar el fitxer de configuracio de la partida */
@@ -441,6 +440,8 @@ int main(int n_args, char *ll_args[])
 			if (sec>=60){
 				min++;
 				sec=0;
+				if (*max_time > 0) (*max_time)--;
+				printf("\n\t%d", *max_time);
 			}
 			sprintf(temps,"Temps %d : %d", min, sec);
 			win_escristr(temps);
