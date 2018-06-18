@@ -137,7 +137,7 @@ char str_pos_c[20], str_pos_f[20];
 
 // Variables amb memoria compartida
 int* num_pil = 0;
-int* num_pil_fora = 0;
+int* num_pil_act = 0;
 int* dirPaleta = 0;
 int* nblocs = 0;
 int* fi1 = false;
@@ -146,6 +146,7 @@ int* blocs_t_invers;
 int* max_time;
 int* id_semafor;
 int* id_bustia;
+int* pil_fora = 0;
 
 
 /*funcio que s'encarrega de pasar els valors numerics a una cadena de caracters (Strings) */
@@ -167,7 +168,7 @@ void toString(int pilota){
 void inicialitzar_variables(){
 	int tam_mem;
 	//Calculem el tamany de la memoria compartida
-	tam_mem = sizeof(int)*10;
+	tam_mem = sizeof(int)*11;
 
 	//Inicialitzem la memoria compartida i obtenim l'id
 	id_ipc_com = ini_mem(tam_mem);
@@ -176,7 +177,7 @@ void inicialitzar_variables(){
 	pun_mem_compartida = map_mem(id_ipc_com);
 
 	num_pil = pun_mem_compartida;
-	num_pil_fora = pun_mem_compartida + sizeof(int)*1;
+	num_pil_act = pun_mem_compartida + sizeof(int)*1;
 	dirPaleta = pun_mem_compartida + sizeof(int)*2;
 	nblocs = pun_mem_compartida + sizeof(int)*3;
 	fi1 = pun_mem_compartida + sizeof(int)*4;
@@ -185,6 +186,7 @@ void inicialitzar_variables(){
 	max_time = pun_mem_compartida + sizeof(int)*7;
 	id_semafor = pun_mem_compartida + sizeof(int)*8;
 	id_bustia = pun_mem_compartida + sizeof(int)*9;
+	pil_fora = pun_mem_compartida + sizeof(int)*10;
 
 	*blocs_t_invers = INVERS;
 	*id_semafor = ini_sem(1);
@@ -347,6 +349,7 @@ void mostra_final(char *miss)
 	lmarge=(n_col+strlen(new_message))/2;
 	sprintf(marge,"%%%ds",lmarge);
 	sprintf(strin, marge,new_message);
+	signalS(*id_semafor);
 	win_escristr(strin);
 
 	win_update();
@@ -365,14 +368,22 @@ void * mou_paleta(void * nul)
 		if (tecla != 0) {
 			if ((tecla == TEC_DRETA)
 				&& ((c_pal + MIDA_PALETA) < n_col - 1)) {
+					waitS(*id_semafor);
 					win_escricar(f_pal, c_pal, ' ', NO_INV);										/* esborra primer bloc */
+					signalS(*id_semafor);
 					c_pal++;																										/* actualitza posicio */
+					waitS(*id_semafor);
 					win_escricar(f_pal, c_pal + MIDA_PALETA - 1, '0', INVERS);	/*esc. ultim bloc */
+					signalS(*id_semafor);
 			}
 			if ((tecla == TEC_ESQUER) && (c_pal > 1)) {
-					win_escricar(f_pal, c_pal + MIDA_PALETA - 1, ' ', NO_INV);	/*esborra ultim bloc */
-					c_pal--;																										/* actualitza posicio */
-					win_escricar(f_pal, c_pal, '0', INVERS);										/* escriure primer bloc */
+				waitS(*id_semafor);
+				win_escricar(f_pal, c_pal + MIDA_PALETA - 1, ' ', NO_INV);	/*esborra ultim bloc */
+				signalS(*id_semafor);
+				c_pal--;																										/* actualitza posicio */
+				waitS(*id_semafor);
+				win_escricar(f_pal, c_pal, '0', INVERS);										/* escriure primer bloc */
+				signalS(*id_semafor);
 			}
 			if (tecla == TEC_RETURN){
 				*fi1 = true;
@@ -436,7 +447,10 @@ int main(int n_args, char *ll_args[])
 		execlp("./pilota4", "pilota4", str_id_ipc, str_id_ipc_com, str_f_pil, str_c_pil, str_vel_f,
 		str_vel_c, str_pos_f, str_pos_c, str_n_fil, str_n_col, str_retard, (char *) 0);
 		exit(0);
-	} else 	(*num_pil)++;										//Proces pare
+	} else {
+		(*num_pil)++;										//Proces pare
+		(*num_pil_act)++;
+	}
 
 	char temps[10];
 	int tem=0;
@@ -452,12 +466,18 @@ int main(int n_args, char *ll_args[])
 			sprintf(temps,"Temps %d : %d", min, sec);
 			if ((*max_time) != 0){
 				sprintf(temps,"Temps %d : %d\t Temps bloc T: %d", min, sec, (*max_time));
+				waitS(*id_semafor);
 				(*max_time)--;
+				signalS(*id_semafor);
 			}
+			waitS(*id_semafor);
 			win_escristr(temps);
+			signalS(*id_semafor);
 			tem=0;
 		}
+		waitS(*id_semafor);
 		win_update();
+		signalS(*id_semafor);
 		win_retard(retard);	/* retard del joc */
 	} while (!(*fi1) && !(*fi2));
 
@@ -466,9 +486,6 @@ int main(int n_args, char *ll_args[])
 	else
 		mostra_final("GAME OVER");
 
-	/*for (int i = 0; i <(*num_pil); i++){
-		waitpid(list_procs[i], NULL, 0);
-	}*/
 	waitpid(list_procs[0], NULL, 0);
 	pthread_join(th_paleta, NULL);
 
