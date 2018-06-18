@@ -241,18 +241,18 @@ void* mou_pilota(int ind)
 							llegit=true;
 							sprintf(missatge_bustia, "%c:%.2f", id_pilota_bckp, vel_f);
 							waitS(*id_semafor);
-							for (int i=0; i <=MAXBALLS; i++){
+							for (int i=0; i<(*num_pil_act); i++){
 									sendM(*id_bustia, missatge_bustia, sizeof(missatge_bustia));
 							}
 							win_escricar( f_pil, c_pil, ' ', NO_INV); //esborrem la pilota
 							signalS(*id_semafor);
-							exit(0);
 						}
 					} else if (*num_pil_act == 0){
 						waitS(*id_semafor);
 						*fi2 = true;
 						signalS(*id_semafor);
 					}
+					exit(0);
 				}
 			}
 		}else{	/* posicio hipotetica = a la real: moure */
@@ -269,12 +269,15 @@ void* mou_pilota(int ind)
 			(*pil_fora)--;
 			signalS(*id_semafor);
 			receiveM(*id_bustia, missatge_rebut);
+			/*
 			if (*pil_fora == 0){
-				for (int i=0; i<(MAXBALLS-(*num_pil_act)); i++){
-					receiveM(*id_bustia, NULL);
-					printf("%d %d\n", *num_pil_act, *pil_fora);
+				if (MAXBALLS - (*num_pil_act) > 0){
+					for (int i=0; i<(MAXBALLS-(*num_pil_act)); i++){
+						receiveM(*id_bustia, NULL);
+					}
 				}
 			}
+			*/
 			sprintf(&id_pilota, "%c", missatge_rebut[0]);
 			vel_f_rebuda_str = strndup(missatge_rebut+2, strlen(missatge_rebut));
 			vel_f_rebuda = atof(vel_f_rebuda_str);
