@@ -32,12 +32,13 @@ float vel_c, vel_f;
 float r_vel_f, r_vel_c;
 float pos_c, pos_f;
 float time_total, time_start, time_end;
+char *vel_f_rebuda_str;
 void* pun_mem_compartida;
 void* pun_mem_pantalla;
 
 
 // Variables per a transformar en String
-char id_pilota;
+char id_pilota, id_pilota_bckp;
 char missatge_bustia[7];
 char missatge_rebut[7];
 char str_retard[20];
@@ -48,7 +49,7 @@ char str_vel_c[20], str_vel_f[20];
 char str_pos_c[20], str_pos_f[20];
 
 int* num_pil;
-int* num_pil_fora;
+int* num_pil_act;
 int* dirPaleta;
 int* nblocs;
 int* fi1;
@@ -57,6 +58,7 @@ int* blocs_t_invers;
 int* max_time;
 int* id_semafor;
 int* id_bustia;
+int* pil_fora;
 
 /* Si hi ha una col.lisió pilota-bloci esborra el bloc */
 void comprovar_bloc(int f, int c)
@@ -64,32 +66,48 @@ void comprovar_bloc(int f, int c)
 	int col;
 	char quin = win_quincar(f, c);
 	if (quin == WLLCHAR){
-		if ((*max_time) > 0) win_escricar(f, c, ' ', NO_INV);
+		if ((*max_time) > 0){
+			waitS(*id_semafor);
+			win_escricar(f, c, ' ', NO_INV);
+			signalS(*id_semafor);
+		}
 	}
 	if (quin == BLKCHAR || quin == FRNTCHAR || quin == TOPCHAR) {
 		col = c;
+		waitS(*id_semafor);
 		while (win_quincar(f, col) != ' ') {
 			win_escricar(f, col, ' ', NO_INV);
 			col++;
 		}
+		signalS(*id_semafor);
 		col = c - 1;
+		waitS(*id_semafor);
 		while (win_quincar(f, col) != ' ') {
 			win_escricar(f, col, ' ', NO_INV);
 			col--;
 		}
+		signalS(*id_semafor);
 		if (quin == TOPCHAR){
+			waitS(*id_semafor);
 			if ((*max_time) == 0){
 				(*max_time) = 5;
+				signalS(*id_semafor);
 			}
 			else{
 				(*max_time) = (*max_time) + 5;
+				signalS(*id_semafor);
 			}
+			waitS(*id_semafor);
 			*blocs_t_invers = NO_INV;
+			signalS(*id_semafor);
 		}
 		/* TODO: generar nova pilota */
 		if (quin == BLKCHAR){
 			//Generar nova pilota FASE 3
-			(*num_pil)++;
+			waitS(*id_semafor);
+			*num_pil_act += 1;
+			*num_pil += 1;
+			signalS(*id_semafor);
 			srand(time(NULL));
 			r_vel_f = ((rand()%100)+1)*0.01;
 			r_vel_c = ((rand()%100)+1)*0.01;
@@ -114,7 +132,9 @@ void comprovar_bloc(int f, int c)
 				str_vel_c, str_pos_f, str_pos_c, str_n_fil, str_n_col, str_retard, (char *) 0);
 			}
 		}
+		waitS(*id_semafor);
 		*nblocs -= 1;
+		signalS(*id_semafor);
 	}
 }
 
@@ -149,8 +169,9 @@ void control_impacte(int ind) {
 		}
 	}
 
+	waitS(*id_semafor);
 	*dirPaleta=0;	/* reset perque ja hem aplicat l'efecte */
-
+	signalS(*id_semafor);
 }
 
 /* funcio per moure la pilota: retorna un 1 si la pilota surt per la porteria,*/
@@ -159,8 +180,6 @@ void* mou_pilota(int ind)
 {
 	int f_h, c_h;
 	char rh, rv, rd;
-	char *vel_f_rebuda_str;
-	int longitud_rebuda;
 	do{
 		f_h = pos_f + vel_f;	/* posicio hipotetica de la pilota (entera) */
 		c_h = pos_c + vel_c;
@@ -201,37 +220,61 @@ void* mou_pilota(int ind)
 			}
 			/* mostrar la pilota a la nova posició */
 			if (win_quincar(f_h, c_h) == ' '){	/* verificar posicio definitiva *//* si no hi ha obstacle */
+				waitS(*id_semafor);
 				win_escricar(f_pil, c_pil, ' ', NO_INV);	/* esborra pilota */
+				signalS(*id_semafor);
 				pos_f += vel_f;
 				pos_c += vel_c;
 				f_pil = f_h;
 				c_pil = c_h;	/* actualitza posicio actual */
 				if (f_pil != n_fil - 1){	/* si no surt del taulell, */
+					waitS(*id_semafor);
 					win_escricar(f_pil, c_pil, id_pilota, *blocs_t_invers);	/* imprimeix pilota */
+					signalS(*id_semafor);
 				}else{				//la pilota surt del taulell
-					if (*num_pil != *num_pil_fora){
-						waitS(*id_semafor);
-						sprintf(missatge_bustia, "%c:%.2f", id_pilota, vel_f);
-						for (int i=0; i < MAXBALLS; i++){
-								sendM(*id_bustia, missatge_bustia, sizeof(missatge_bustia));
+					if (*num_pil_act > 1){
+						if (!llegit){
+							waitS(*id_semafor);
+							*num_pil_act = *num_pil_act - 1;
+							*pil_fora = (*num_pil_act);
+							signalS(*id_semafor);
+							llegit=true;
+							sprintf(missatge_bustia, "%c:%.2f", id_pilota_bckp, vel_f);
+							waitS(*id_semafor);
+							for (int i=0; i <=MAXBALLS; i++){
+									sendM(*id_bustia, missatge_bustia, sizeof(missatge_bustia));
+							}
+							win_escricar( f_pil, c_pil, ' ', NO_INV); //esborrem la pilota
+							signalS(*id_semafor);
+							exit(0);
 						}
-						*num_pil_fora += 1;
-						win_escricar( f_pil, c_pil, ' ', NO_INV); //esborrem la pilota
-						signalS(*id_semafor);
-					} else
+					} else if (*num_pil_act == 0){
+						waitS(*id_semafor);
 						*fi2 = true;
+						signalS(*id_semafor);
+					}
 				}
 			}
-		} else {	/* posicio hipotetica = a la real: moure */
+		}else{	/* posicio hipotetica = a la real: moure */
 			pos_f += vel_f;
 			pos_c += vel_c;
 		}
 		if ((*max_time) == 0){
+			waitS(*id_semafor);
 			*blocs_t_invers = INVERS;
+			signalS(*id_semafor);
 		}
-		if (((*num_pil_fora) > 0) && (!llegit)) {
-			llegit = true;
+		if ((*pil_fora) > 0){
+			waitS(*id_semafor);
+			(*pil_fora)--;
+			signalS(*id_semafor);
 			receiveM(*id_bustia, missatge_rebut);
+			if (*pil_fora == 0){
+				for (int i=0; i<(MAXBALLS-(*num_pil_act)); i++){
+					receiveM(*id_bustia, NULL);
+					printf("%d %d\n", *num_pil_act, *pil_fora);
+				}
+			}
 			sprintf(&id_pilota, "%c", missatge_rebut[0]);
 			vel_f_rebuda_str = strndup(missatge_rebut+2, strlen(missatge_rebut));
 			vel_f_rebuda = atof(vel_f_rebuda_str);
@@ -248,7 +291,9 @@ void* mou_pilota(int ind)
 			}
 		}
 		if ((*nblocs)==0){
+			waitS(*id_semafor);
 			*fi2 = true;
+			signalS(*id_semafor);
 		}
 		win_retard(retard);
 	} while (!(*fi2) && !(*fi1));
@@ -283,7 +328,7 @@ int main(int n_args, char *ll_args[]){
 	win_set(pun_mem_pantalla, n_fil, n_col);
 
 	num_pil = pun_mem_compartida;
-	num_pil_fora = pun_mem_compartida + sizeof(int)*1;
+	num_pil_act = pun_mem_compartida + sizeof(int)*1;
 	dirPaleta = pun_mem_compartida + sizeof(int)*2;
 	nblocs = pun_mem_compartida + sizeof(int)*3;
 	fi1 = pun_mem_compartida + sizeof(int)*4;
@@ -292,8 +337,11 @@ int main(int n_args, char *ll_args[]){
 	max_time = pun_mem_compartida + sizeof(int)*7;
 	id_semafor = pun_mem_compartida + sizeof(int)*8;
 	id_bustia = pun_mem_compartida + sizeof(int)*9;
+	pil_fora = pun_mem_compartida + sizeof(int)*10;
 
 	sprintf(&id_pilota, "%d", *num_pil);
+	sprintf(&id_pilota_bckp, "%d", *num_pil);
+
 	mou_pilota(*num_pil);
 
 	if (pid_fill != 0) waitpid(pid_fill, NULL, 0);
