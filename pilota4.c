@@ -27,6 +27,7 @@ bool llegit = false;
 int id_ipc, id_ipc_com;
 int n_fil, n_col, retard;
 int f_pil, c_pil;
+float vel_f_rebuda;
 float vel_c, vel_f;
 float r_vel_f, r_vel_c;
 float pos_c, pos_f;
@@ -37,8 +38,8 @@ void* pun_mem_pantalla;
 
 // Variables per a transformar en String
 char id_pilota;
-char missatge_bustia[6];
-char missatge_rebut[6];
+char missatge_bustia[7];
+char missatge_rebut[7];
 char str_retard[20];
 char str_n_fil[20], str_n_col[20];
 char str_id_ipc[20], str_id_ipc_com[20];
@@ -158,6 +159,8 @@ void* mou_pilota(int ind)
 {
 	int f_h, c_h;
 	char rh, rv, rd;
+	char *vel_f_rebuda_str;
+	int longitud_rebuda;
 	do{
 		f_h = pos_f + vel_f;	/* posicio hipotetica de la pilota (entera) */
 		c_h = pos_c + vel_c;
@@ -230,6 +233,19 @@ void* mou_pilota(int ind)
 			llegit = true;
 			receiveM(*id_bustia, missatge_rebut);
 			sprintf(&id_pilota, "%c", missatge_rebut[0]);
+			vel_f_rebuda_str = strndup(missatge_rebut+2, strlen(missatge_rebut));
+			vel_f_rebuda = atof(vel_f_rebuda_str);
+			if (fabs(vel_f) < fabs(vel_f_rebuda)){
+				vel_f = (vel_f_rebuda * 1.25);
+			} else if (fabs(vel_f) > fabs(vel_f_rebuda)) {
+				vel_f = vel_f_rebuda;
+			}
+			if (vel_f > 1.0){
+				vel_f = 1.0;
+			}
+			if (vel_f < (-1.0)){
+				vel_f = (-1.0);
+			}
 		}
 		if ((*nblocs)==0){
 			*fi2 = true;
